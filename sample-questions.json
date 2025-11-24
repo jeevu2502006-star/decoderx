@@ -1,0 +1,52 @@
+[
+  {
+    "question": "Who was the first President of the United States?",
+    "responses": ["George Washington", "Abraham Lincoln", "Thomas Jefferson", "John Adams"],
+    "correctAnswerIndex": 0
+  },
+  {
+    "question": "In which year did World War I begin?",
+    "responses": ["1914", "1918", "1939", "1905"],
+    "correctAnswerIndex": 0
+  },
+  {
+    "question": "Which empire built the Colosseum in Rome?",
+    "responses": ["Greek Empire", "Roman Empire", "Ottoman Empire", "Persian Empire"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "question": "Who was the leader of Nazi Germany during World War II?",
+    "responses": ["Joseph Stalin", "Winston Churchill", "Adolf Hitler", "Benito Mussolini"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "question": "Which ancient civilization built the pyramids?",
+    "responses": ["Mesopotamians", "Romans", "Egyptians", "Mayans"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "question": "What year did India gain independence from British rule?",
+    "responses": ["1945", "1947", "1950", "1930"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "question": "Who was known as the Iron Lady?",
+    "responses": ["Angela Merkel", "Indira Gandhi", "Margaret Thatcher", "Golda Meir"],
+    "correctAnswerIndex": 2
+  },
+  {
+    "question": "Which war was fought between the North and South regions of the United States?",
+    "responses": ["Revolutionary War", "Civil War", "Vietnam War", "World War II"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "question": "Who discovered America in 1492?",
+    "responses": ["Vasco da Gama", "Christopher Columbus", "Ferdinand Magellan", "Marco Polo"],
+    "correctAnswerIndex": 1
+  },
+  {
+    "question": "Which wall divided East and West Berlin during the Cold War?",
+    "responses": ["Great Wall of China", "Berlin Wall", "Iron Curtain", "Wall of Europe"],
+    "correctAnswerIndex": 1
+  }
+]

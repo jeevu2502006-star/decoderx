@@ -1,0 +1,125 @@
+/* Decoder - UI Enhancements (Glassmorphism, Animations, Responsive)
+   Place all visual styles here. Designed to layer on top of existing layout
+   without changing element IDs or core behavior. */
+
+:root{
+  --bg-a: #0ea5e9;
+  --bg-b: #7c3aed;
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.12);
+  --card-radius: 20px;
+  --accent: #6366f1;
+  --accent-2: #06b6d4;
+  --muted: rgba(255,255,255,0.8);
+}
+
+/* 1. Animated gradient background */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-10;
+  background: linear-gradient(120deg,var(--bg-a), var(--bg-b));
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+  filter: saturate(1.05) contrast(1.02) blur(6px);
+  opacity:0.95;
+}
+@keyframes gradientShift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* Floating stock icons container (8) */
+.floating-icons{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-5;
+}
+.floating-icons svg{ position:absolute; width:80px; height:80px; opacity:0.12; transform-origin:center; }
+@keyframes floatUpDown{ 0%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-30px) rotate(6deg)} 100%{transform:translateY(0) rotate(0)} }
+
+/* 2. Glassmorphism cards */
+.card-glass{
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  border-radius: var(--card-radius);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.28);
+}
+
+/* Apply glass card to major containers */
+#welcome-screen .bg-white, #quiz-screen .bg-white, #summary-screen .bg-white, #admin-dashboard .bg-white{
+  background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.88));
+  border-radius: var(--card-radius);
+  box-shadow: 0 10px 40px rgba(2,6,23,0.12), 0 2px 6px rgba(2,6,23,0.06);
+}
+
+/* Generic card wrapper used in places we don't want to change structure */
+.card-wrapper{ padding:1rem; border-radius:var(--card-radius); }
+
+/* 3. Smooth page transitions (fade-in, slide-up) */
+.fade-in{ animation:fadeIn 420ms ease both; }
+@keyframes fadeIn{ from{opacity:0; transform: translateY(6px)} to{opacity:1; transform:none} }
+.slide-up{ animation:slideUp 520ms cubic-bezier(.2,.9,.2,1) both; }
+@keyframes slideUp{ from{opacity:0; transform: translateY(14px)} to{opacity:1; transform:none} }
+
+/* 4. Circular timer - styles */
+.timer-wrap{ display:inline-flex; align-items:center; gap:12px; }
+.circular-timer{ width:56px; height:56px; display:inline-block; position:relative; }
+.circular-timer svg{ transform: rotate(-90deg); }
+.circular-timer .timer-text{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent); }
+
+/* progress stroke */
+.timer-track{ stroke: rgba(0,0,0,0.08); stroke-width:8; }
+.timer-progress{ stroke: var(--accent); stroke-width:8; stroke-linecap:round; transition: stroke-dashoffset 0.3s linear, stroke 300ms; }
+
+/* 5. Button micro-animations */
+.btn-animated{ transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms; }
+.btn-animated:hover{ transform: translateY(-4px) scale(1.02); box-shadow: 0 18px 40px rgba(99,102,241,0.12); }
+.btn-animated:active{ transform: translateY(-1px) scale(0.99); }
+.btn-glow{ box-shadow: 0 8px 30px rgba(99,102,241,0.14); }
+
+/* fancy gradient buttons */
+.btn-primary{ background: linear-gradient(90deg,var(--accent), var(--accent-2)); color:#fff; border:none; }
+.btn-primary:hover{ filter: brightness(1.03); }
+
+/* 6. Confetti canvas */
+.confetti-canvas{ position:fixed; inset:0; pointer-events:none; z-index:2000; }
+
+/* 7. Leaderboard animated cards */
+#leaderboard-list .slide-in-item{ transform: translateX(20px); opacity:0; animation: slideInCard 420ms forwards; }
+@keyframes slideInCard{ to{ transform:none; opacity:1; } }
+.top-rank{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(255,215,0,0.12); border-left:4px solid gold; }
+
+/* 9. Modal animations */
+.fixed.inset-0.bg-black.bg-opacity-50 .bg-white{ animation: modalIn 360ms cubic-bezier(.2,.9,.2,1) both; }
+@keyframes modalIn{ from{opacity:0; transform:scale(0.96)} to{opacity:1; transform:none} }
+
+/* Make modals scale and fade */
+.modal-scale{ transform-origin:center center; }
+
+/* Utility: staggered children animation */
+.staggered > *{ opacity:0; transform: translateY(8px); }
+.staggered.show > *{ animation:staggerIn 360ms forwards; }
+@keyframes staggerIn{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+
+/* 10. Fully responsive tweaks */
+@media (max-width: 640px){
+  .max-w-md{ max-width: 96%; }
+  .max-w-4xl{ max-width: 96%; }
+  #welcome-title{ font-size:1.6rem; }
+  #question-text{ font-size:1.05rem; }
+  .circular-timer{ width:48px; height:48px; }
+}
+
+/* Small helper classes for reuse */
+.hidden{ display:none!important; }
+.center{ display:flex; align-items:center; justify-content:center; }
+
+/* Comments: animation classes are reusable: .fade-in, .slide-up, .modal-scale, .btn-animated */
+
+/* End of UI styles */

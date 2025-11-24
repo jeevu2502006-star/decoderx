@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Block client writes to participant documents - writes to decoder_participants should only be done
+    // by a Cloud Function or the admin SDK.
+    match /decoder_participants/{docId} {
+      allow read: if true;  // allow leaderboard read to public
+      allow write: if false; // prevent clients from directly writing; use Cloud Function
+    }
+
+    // App state document (admin only) - allow only authenticated admin operations
+    match /decoder/appState {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // For other collections, default to deny writes from unauthenticated users
+    match /{document=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}

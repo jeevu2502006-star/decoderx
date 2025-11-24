@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
+    <title>Decoder - Test Your Knowledge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Firebase scripts removed to run in local-only mode -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', 'Roboto', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        /* Answer recording badge and selection animation */
+        .selected-recording {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 20px rgba(99,102,241,0.12), 0 2px 6px rgba(15,23,42,0.04);
+            transition: transform 220ms ease, box-shadow 220ms ease, background-color 220ms ease;
+        }
+        .recorded-badge {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(6px);
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            animation: badgeIn 360ms cubic-bezier(.2,.9,.2,1);
+        }
+        .recorded-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 0 rgba(255,255,255,0.6);
+            animation: pulse 1s infinite ease-in-out;
+        }
+        @keyframes badgeIn {
+            from { transform: translateY(-40%) scale(0.9); opacity: 0 }
+            to { transform: translateY(-50%) scale(1); opacity: 1 }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1 }
+            50% { transform: scale(1.45); opacity: 0.6 }
+            100% { transform: scale(1); opacity: 1 }
+        }
+        /* Mobile-friendly touch target sizes and small-screen adjustments */
+        html, body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            touch-action: manipulation;
+            -ms-touch-action: manipulation;
+        }
+        /* Account for device safe areas (notches) */
+        body {
+            padding-top: env(safe-area-inset-top, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            padding-left: env(safe-area-inset-left, 0);
+            padding-right: env(safe-area-inset-right, 0);
+        }
+        button, input, textarea, label {
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            touch-action: manipulation;
+        }
+        /* Ensure minimum tap size for touch devices */
+        .touch-friendly {
+            min-height: 48px;
+            min-width: 48px;
+            padding: 0.75rem 1rem;
+        }
+        /* Make modals more full-width on small screens */
+        @media (max-width: 640px) {
+            .max-w-md { max-width: 95%; }
+            .max-w-2xl { max-width: 95%; }
+            .max-w-4xl { max-width: 95%; }
+            .p-8 { padding: 1rem; }
+            .p-6 { padding: 0.75rem; }
+        }
+        /* Responsive adjustments for common mobile widths and touch comfort */
+        :root {
+            /* Responsive base font size: 14px - 18px depending on viewport */
+            font-size: clamp(14px, 2.8vw, 18px);
+        }
+
+        /* Limit extremely wide layouts on large screens for readability */
+        body {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Make primary card and modal containers adapt to mobile sizes */
+        .max-w-md, .max-w-2xl, .max-w-4xl, .max-w-7xl {
+            box-sizing: border-box;
+        }
+
+        /* Ensure input and buttons are full width and comfortable to tap on small screens */
+        @media (max-width: 640px) {
+            input[type="email"], input[type="text"], textarea, button {
+                width: 100% !important;
+            }
+            .touch-friendly { min-height: 56px; padding: 0.9rem 1rem; }
+            .rounded-3xl { border-radius: 1rem; }
+            .rounded-2xl { border-radius: 0.9rem; }
+        }
+
+        /* Fine-tune spacing for narrow devices (phones ~360-430px) */
+        @media (max-width: 420px) {
+            .animate-fade-in, .animate-slide-up { transform-origin: top center; }
+            .p-4 { padding: 0.75rem; }
+            .p-6 { padding: 0.75rem; }
+            .text-3xl { font-size: 1.6rem; }
+            .text-4xl { font-size: 1.8rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .animate-slide-up, .animate-fade-in, .animate-pulse {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 flex items-center justify-center p-4">
+        <!-- Admin Status Indicator removed from UI for security (login available via keyboard shortcut only) -->
+        <div class="max-w-md w-full animate-fade-in">
+            <div class="bg-white rounded-3xl shadow-2xl p-8 md:p-10 space-y-8">
+                <div class="text-center space-y-4">
+                    <div class="flex justify-center">
+                        <div id="site-logo" class="bg-gradient-to-r from-blue-500 to-purple-500 p-4 rounded-2xl" title="Decoder logo">
+                            <img src="icons/icon.svg" alt="Decoder logo" class="w-12 h-12" />
+                        </div>
+                    </div>
+                    <h1 id="welcome-title" class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        Welcome to Decoder!
+                    </h1>
+                    <p id="welcome-subtitle" class="text-gray-600 text-sm md:text-base">
+                        Test your knowledge and compete with others
+                    </p>
+                </div>
+                <div class="bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl p-4 border border-teal-100">
+                    <p id="quiz-instructions" class="text-sm text-gray-700 leading-relaxed">
+                        Read each question carefully and select your answer within 15 seconds.
+                    </p>
+                </div>
+                <form id="welcome-form" class="space-y-6">
+                    <div>
+                        <div id="auth-block" class="space-y-3">
+                            <div id="signed-in-as" class="hidden text-sm text-gray-700"></div>
+                            <div class="flex items-center gap-2">
+                                <button id="google-signin-btn" type="button" onclick="signInWithGoogle()" class="hidden flex-1 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all">Sign in with Google</button>
+                                <button id="signout-btn" type="button" onclick="signOutGoogle()" class="hidden flex-1 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all">Sign out</button>
+                            </div>
+                                    <div class="mt-2 flex gap-2">
+                                        <div id="verified-badge" class="hidden inline-block ml-2 p-1 text-xs font-medium text-white bg-green-500 rounded-full">Verified</div>
+                                    <button id="verify-email-btn" type="button" onclick="sendEmailVerificationLink()" class="hidden bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-3 rounded-xl transition-all">Verify Gmail</button>
+                                    <button id="validate-email-btn" type="button" onclick="validateParticipantEmailWithoutAuth()" class="hidden bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-3 rounded-xl transition-all">Verify via Email Check</button>
+                                    <span id="verify-help" class="text-sm text-gray-400 hidden">Check your inbox for a sign-in link after clicking Verify Gmail.</span>
+                                </div>
+                            
+                            <!-- Legacy email fallback (kept hidden by default). Will be shown if auth not required or not available. -->
+                            <label for="email-input" class="block text-sm font-medium text-gray-700 mb-2">Enter your Gmail address</label>
+                            <input
+                                id="email-input"
+                                type="email"
+                                placeholder="you@gmail.com"
+                                inputmode="email"
+                                autocomplete="email"
+                                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-gray-900 placeholder-gray-400"
+                            />
+                        </div>
+                    </div>
+                    <button
+                        type="submit"
+                        class="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Start Decoder</span>
+                    </button>
+                </form>
+                <div class="text-center space-y-2">
+                    <div class="flex items-center justify-center gap-2">
+                        <button onclick="showLeaderboard()" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">View Leaderboard</button>
+                        <button id="continue-btn" onclick="continueAsPrevious()" class="text-sm text-blue-600 hover:underline hidden">Continue as previous</button>
+                    </div>
+                    <!-- Admin login button removed from UI; use Ctrl+Shift+A keyboard shortcut to open admin login -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 p-4 hidden">
+        <div class="max-w-4xl mx-auto py-8">
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="question-counter" class="text-sm font-medium text-gray-600">
+                        Question 1 of 3
+                    </span>
+                    <span id="progress-percent" class="text-sm font-medium text-gray-600">
+                        33%
+                    </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div
+                        id="progress-bar"
+                        class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 ease-out rounded-full"
+                        style="width: 33%"
+                    ></div>
+                </div>
+            </div>
+
+            <!-- Timer -->
+            <div class="mb-6">
+                <div class="flex items-center gap-3 bg-white rounded-xl p-4 shadow-md">
+                    <svg id="timer-icon" class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-gray-600">Time Remaining</span>
+                            <span id="timer-text" class="text-lg font-bold text-blue-600">15s</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div
+                                id="timer-bar"
+                                class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000 ease-linear rounded-full"
+                                style="width: 100%"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6 animate-slide-up">
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold text-gray-900 mb-6 leading-relaxed">
+                    Question text here
+                </h2>
+                <div id="options-container" class="space-y-3">
+                    <!-- Options will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback -->
+        <div id="feedback-message" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 hidden px-6 py-3 rounded-xl shadow-2xl flex items-center gap-2">
+            <span id="feedback-icon"></span>
+            <span id="feedback-text" class="font-semibold text-lg"></span>
+        </div>
+    </div>
+
+    <!-- Summary Screen -->
+    <div id="summary-screen" class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 p-4 py-8 hidden">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8 animate-fade-in">
+                <div class="flex justify-center mb-4">
+                    <div id="summary-icon" class="bg-gradient-to-r from-blue-500 to-purple-500 p-4 rounded-full">
+                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h1 id="summary-title" class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                    Decoder Complete!
+                </h1>
+                <p class="text-gray-600">Here's how you did</p>
+            </div>
+
+            <!-- Score Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6 animate-slide-up">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div id="score-percentage" class="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                            100%
+                        </div>
+                        <p class="text-gray-600 font-medium">Overall Score</p>
+                    </div>
+                    <div class="text-center border-x border-gray-200 px-6">
+                        <div class="flex items-center justify-center gap-2 mb-2">
+                            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span id="correct-count" class="text-4xl font-bold text-green-600">0</span>
+                        </div>
+                        <p class="text-gray-600 font-medium">Correct</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center gap-2 mb-2">
+                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span id="wrong-count" class="text-4xl font-bold text-red-600">0</span>
+                        </div>
+                        <p class="text-gray-600 font-medium">Wrong</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rank Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6 animate-slide-up">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 mb-1">Your Rank</p>
+                        <div class="flex items-center gap-3">
+                            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                            <span id="rank-number" class="text-3xl font-bold text-gray-900">#1</span>
+                        </div>
+                    </div>
+                    <button
+                        onclick="showLeaderboard()"
+                        class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 flex items-center gap-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                        <span>View Leaderboard</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Answer Review -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6 animate-slide-up">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Answer Review</h2>
+                <div id="answer-review" class="space-y-4">
+                    <!-- Answer review items will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 animate-slide-up">
+                <button
+                    id="play-again-btn"
+                    onclick="resetQuiz()"
+                    class="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Play Again</span>
+                </button>
+                <button
+                    onclick="goHome()"
+                    class="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-4 px-6 rounded-xl transition-all duration-200 border-2 border-gray-200"
+                >
+                    Go Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="redeem-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 animate-slide-up">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Congratulations! 🎉</h2>
+                <button onclick="closeRedeemModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <p id="redeem-code-text" class="text-gray-600 font-semibold">Congratulations! Here's your redeem code:</p>
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <code id="redeem-code" class="text-2xl font-mono font-bold text-blue-600 tracking-wider">
+                            QUIZ2024ABC
+                        </code>
+                        <button onclick="copyRedeemCode()" id="copy-btn" class="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                    <p id="redeem-remaining" class="text-sm text-gray-500 mt-2">Remaining unused redeem codes: --</p>
+                <p id="copy-message" class="text-sm text-gray-500">Click the copy button to copy the code</p>
+                <button onclick="closeRedeemModal()" class="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Banner for PWA (Android) -->
+    <div id="install-banner" class="fixed bottom-6 left-4 right-4 z-50 hidden"> 
+        <div class="bg-white rounded-2xl shadow-md p-3 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-gray-900">Install Decoder</div>
+                    <div class="text-xs text-gray-500">Add this app to your home screen for quick access</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="install-cta" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl">Install</button>
+                <button id="install-dismiss" class="text-gray-500 px-3 py-2 rounded-xl">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="leaderboard-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-slide-up">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900">Leaderboard</h2>
+                <button onclick="closeLeaderboard()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-y-auto flex-1 p-6">
+                <div id="leaderboard-list" class="space-y-3">
+                    <!-- Leaderboard items will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 animate-slide-up">
+            <div class="text-center space-y-4 mb-6">
+                <div class="flex justify-center">
+                    <div class="bg-gradient-to-r from-red-500 to-orange-500 p-4 rounded-2xl">
+                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Admin Login</h2>
+                <p class="text-gray-600">Secure access to admin dashboard</p>
+            </div>
+            <form id="admin-login-form" class="space-y-6">
+                <div id="admin-error" class="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm hidden"></div>
+                <div>
+                    <label for="admin-username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input id="admin-username" type="text" placeholder="Enter username" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-gray-900 placeholder-gray-400" inputmode="text" autocapitalize="none" autocomplete="username" required>
+                </div>
+                <div>
+                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input id="admin-password" type="password" placeholder="Enter password" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-gray-900 placeholder-gray-400" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                    Login
+                </button>
+            </form>
+            <button onclick="closeAdminLogin()" class="w-full mt-4 text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 hidden">
+        <div class="bg-white shadow-md border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+                    <div class="flex gap-4">
+                        <button onclick="refreshAdminData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">Refresh</button>
+                        <button onclick="logoutAdmin()" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:pxa8 py-8">
+            <!-- Admin tabs and content -->
+            <div class="bg-white rounded-xl shadow-md mb-6">
+                <div class="flex border-b border-gray-200 overflow-x-auto">
+                    <button onclick="switchAdminTab('questions')" id="tab-questions" class="admin-tab flex items-center gap-2 px-6 py-4 font-medium border-b-2 border-blue-500 text-blue-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span>Questions</span>
+                    </button>
+                    <button onclick="switchAdminTab('settings')" id="tab-settings" class="admin-tab flex items-center gap-2 px-6 py-4 font-medium text-gray-600 hover:text-gray-900">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span>Settings</span>
+                    </button>
+                    <button onclick="switchAdminTab('redeem')" id="tab-redeem" class="admin-tab flex items-center gap-2 px-6 py-4 font-medium text-gray-600 hover:text-gray-900">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
+                        </svg>
+                        <span>Redeem Code</span>
+                    </button>
+                    <button onclick="switchAdminTab('performance')" id="tab-performance" class="admin-tab flex items-center gap-2 px-6 py-4 font-medium text-gray-600 hover:text-gray-900">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span>Performance</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Content -->
+            <div id="admin-content">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="js/ui.js" defer></script>
+</body>
+</html>
